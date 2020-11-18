@@ -35,6 +35,8 @@
 
 #include <ArmAuthorization.h>
 #include <systemlib/mavlink_log.h>
+#include <uORB/Subscription.hpp>
+#include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/vehicle_command_ack.h>
 #include <HealthFlags.h>
 
@@ -154,6 +156,36 @@ bool PreFlightCheck::preArmCheck(orb_advert_t *mavlink_log_pub, const vehicle_st
 		    && status.vehicle_type != vehicle_status_s::VEHICLE_TYPE_ROTARY_WING) {
 			if (prearm_ok) {
 				if (report_fail) { mavlink_log_critical(mavlink_log_pub, "Arming denied! Vehicle is not in multicopter mode"); }
+
+				prearm_ok = false;
+			}
+		}
+	}
+
+	if (prearm_ok && status_flags.rc_signal_found_once && !status.rc_signal_lost) {
+		uORB::SubscriptionData<manual_control_setpoint_s> manual_control_setpoint_sub{ORB_ID(manual_control_setpoint)};
+		const manual_control_setpoint_s &manual_control_setpoint = manual_control_setpoint_sub.get();
+
+		if (status_flags.rc_signal_found_once && !status.rc_signal_lost) {
+			if ((manual_control_setpoint.z > 0.6f) &&
+			    (status.nav_state == vehicle_status_s::NAVIGATION_STATE_POSCTL ||
+			     status.nav_state == vehicle_status_s::NAVIGATION_STATE_ALTCTL)) {
+
+				if (report_fail) {
+					mavlink_log_critical(mavlink_log_pub, "Arming denied! Throttle not centered");
+				}
+
+				prearm_ok = false;
+
+			} else if ((manual_control_setpoint.z > 0.1f) &&
+				   (status.nav_state == vehicle_status_s::NAVIGATION_STATE_MANUAL ||
+				    status.nav_state == vehicle_status_s::NAVIGATION_STATE_ACRO ||
+				    status.nav_state == vehicle_status_s::NAVIGATION_STATE_STAB ||
+				    status.nav_state == vehicle_status_s::NAVIGATION_STATE_RATTITUDE)) {
+
+				if (report_fail) {
+					mavlink_log_critical(mavlink_log_pub, "Arming denied! Throttle not zero");
+				}
 
 				prearm_ok = false;
 			}

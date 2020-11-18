@@ -56,6 +56,7 @@
 
 // subscriptions
 #include <uORB/Subscription.hpp>
+#include <uORB/SubscriptionBlocking.hpp>
 #include <uORB/SubscriptionMultiArray.hpp>
 #include <uORB/topics/actuator_controls.h>
 #include <uORB/topics/airspeed.h>
@@ -68,6 +69,7 @@
 #include <uORB/topics/geofence_result.h>
 #include <uORB/topics/iridiumsbd_status.h>
 #include <uORB/topics/manual_control_setpoint.h>
+#include <uORB/topics/manual_control_switches.h>
 #include <uORB/topics/mission.h>
 #include <uORB/topics/mission_result.h>
 #include <uORB/topics/offboard_control_mode.h>
@@ -123,8 +125,8 @@ private:
 			 bool *changed);
 
 	bool check_posvel_validity(const bool data_valid, const float data_accuracy, const float required_accuracy,
-				   const hrt_abstime &data_timestamp_us, hrt_abstime *last_fail_time_us, hrt_abstime *probation_time_us, bool *valid_state,
-				   bool *validity_changed);
+				   const hrt_abstime &data_timestamp_us, hrt_abstime *last_fail_time_us, hrt_abstime *probation_time_us, bool &valid_state,
+				   bool &validity_changed);
 
 	void control_status_leds(vehicle_status_s *status_local, const actuator_armed_s *actuator_armed, bool changed,
 				 const uint8_t battery_warning);
@@ -152,7 +154,7 @@ private:
 	void print_reject_arm(const char *msg);
 	void print_reject_mode(const char *msg);
 
-	void reset_posvel_validity(bool *changed);
+	void reset_posvel_validity();
 
 	bool set_home_position();
 	bool set_home_position_alt_only();
@@ -160,18 +162,19 @@ private:
 
 	void update_control_mode();
 
-	// Set the main system state based on RC and override device inputs
-	transition_result_t set_main_state(const vehicle_status_s &status, bool *changed);
-
 	// Enable override (manual reversion mode) on the system
-	transition_result_t set_main_state_override_on(const vehicle_status_s &status, bool *changed);
+	transition_result_t set_main_state_override_on(const vehicle_status_s &status);
 
 	// Set the system main state based on the current RC inputs
-	transition_result_t set_main_state_rc(const vehicle_status_s &status, bool *changed);
+	transition_result_t set_main_state_rc(const vehicle_status_s &status,
+					      const manual_control_switches_s &manual_control_switches);
 
 	bool shutdown_if_allowed();
 
 	bool stabilization_required();
+
+	void UpdateManualControlSetpoint(const vehicle_status_s &status_local);
+	void UpdateManualControlSwitches(const vehicle_status_s &status_local);
 
 	DEFINE_PARAMETERS(
 
@@ -221,7 +224,7 @@ private:
 		(ParamFloat<px4::params::COM_EF_TIME>) _param_ef_time_thres,
 
 		(ParamBool<px4::params::COM_ARM_WO_GPS>) _param_arm_without_gps,
-		(ParamBool<px4::params::COM_ARM_SWISBTN>) _param_arm_switch_is_button,
+		(ParamInt<px4::params::COM_ARM_SWISBTN>) _param_arm_switch_is_button,
 		(ParamBool<px4::params::COM_ARM_MIS_REQ>) _param_arm_mission_required,
 		(ParamBool<px4::params::COM_ARM_AUTH_REQ>) _param_arm_auth_required,
 		(ParamBool<px4::params::COM_ARM_CHK_ESCS>) _param_escs_checks_required,
@@ -273,10 +276,6 @@ private:
 		OVERRIDE_AUTO_MODE_BIT = (1 << 0),
 		OVERRIDE_OFFBOARD_MODE_BIT = (1 << 1)
 	};
-
-	/* Decouple update interval and hysteresis counters, all depends on intervals */
-	static constexpr uint64_t COMMANDER_MONITORING_INTERVAL{10_ms};
-	static constexpr float COMMANDER_MONITORING_LOOPSPERMSEC{1 / (COMMANDER_MONITORING_INTERVAL / 1000.0f)};
 
 	static constexpr float STICK_ON_OFF_LIMIT{0.9f};
 
@@ -334,6 +333,8 @@ private:
 	Hysteresis	_auto_disarm_landed{false};
 	Hysteresis	_auto_disarm_killed{false};
 	Hysteresis	_offboard_available{false};
+	Hysteresis      _rc_arm_switch_hysteresis{false};
+	Hysteresis      _rc_arm_sticks_hysteresis{false};
 
 	hrt_abstime	_last_print_mode_reject_time{0};	///< To remember when last notification was sent
 
@@ -347,13 +348,13 @@ private:
 
 	unsigned int	_leds_counter{0};
 
-	manual_control_setpoint_s	_manual_control_setpoint{};		///< the current manual control setpoint
-	manual_control_setpoint_s	_last_manual_control_setpoint{};	///< the manual control setpoint valid at the last mode switch
+	manual_control_setpoint_s _last_manual_control_setpoint{};	///< the manual control setpoint valid at the last mode switch
 	hrt_abstime	_rc_signal_lost_timestamp{0};		///< Time at which the RC reception was lost
-	int32_t		_flight_mode_slots[manual_control_setpoint_s::MODE_SLOT_NUM] {};
-	uint8_t		_last_manual_control_setpoint_arm_switch{0};
-	uint32_t	_stick_off_counter{0};
-	uint32_t	_stick_on_counter{0};
+	int32_t		_flight_mode_slots[manual_control_switches_s::MODE_SLOT_NUM] {};
+	bool            _arming_switch_or_button_mapped{false};
+
+	uint8_t _loiter_switch{manual_control_switches_s::SWITCH_POS_NONE};
+	uint8_t _return_switch{manual_control_switches_s::SWITCH_POS_NONE};
 
 	hrt_abstime	_boot_timestamp{0};
 	hrt_abstime	_last_disarmed_timestamp{0};
@@ -395,6 +396,8 @@ private:
 	uORB::Subscription					_system_power_sub{ORB_ID(system_power)};
 	uORB::Subscription					_vehicle_acceleration_sub{ORB_ID(vehicle_acceleration)};
 	uORB::Subscription					_vtol_vehicle_status_sub{ORB_ID(vtol_vehicle_status)};
+
+	uORB::SubscriptionBlocking<manual_control_switches_s>	_manual_control_switches_sub{ORB_ID(manual_control_switches)};
 
 	uORB::SubscriptionMultiArray<battery_status_s, battery_status_s::MAX_INSTANCES> _battery_status_subs{ORB_ID::battery_status};
 	uORB::SubscriptionMultiArray<distance_sensor_s>         _distance_sensor_subs{ORB_ID::distance_sensor};
