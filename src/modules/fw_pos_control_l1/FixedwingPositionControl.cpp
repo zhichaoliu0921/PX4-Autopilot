@@ -658,7 +658,8 @@ FixedwingPositionControl::control_position(const hrt_abstime &now, const Vector2
 		_tecs.reset_state();
 	}
 
-	if ((_control_mode.flag_control_auto_enabled || _control_mode.flag_control_offboard_enabled) && pos_sp_curr.valid) {
+	if (((_control_mode.flag_control_auto_enabled && _control_mode.flag_control_position_enabled) ||
+	     _control_mode.flag_control_offboard_enabled) && pos_sp_curr.valid) {
 		/* AUTONOMOUS FLIGHT */
 
 		_control_mode_current = FW_POSCTRL_MODE_AUTO;
@@ -937,7 +938,8 @@ FixedwingPositionControl::control_position(const hrt_abstime &now, const Vector2
 		}
 
 	} else if (_control_mode.flag_control_velocity_enabled &&
-		   _control_mode.flag_control_altitude_enabled) {
+		   _control_mode.flag_control_altitude_enabled &&
+		   _control_mode.flag_control_manual_enabled) {
 		/* POSITION CONTROL: pitch stick moves altitude setpoint, throttle stick sets airspeed,
 		   heading is set to a distant waypoint */
 
@@ -1047,7 +1049,7 @@ FixedwingPositionControl::control_position(const hrt_abstime &now, const Vector2
 			_att_sp.yaw_body = 0;
 		}
 
-	} else if (_control_mode.flag_control_altitude_enabled) {
+	} else if (_control_mode.flag_control_altitude_enabled && _control_mode.flag_control_manual_enabled) {
 		/* ALTITUDE CONTROL: pitch stick moves altitude setpoint, throttle stick sets airspeed */
 
 		if (_control_mode_current != FW_POSCTRL_MODE_POSITION && _control_mode_current != FW_POSCTRL_MODE_ALTITUDE) {
@@ -1088,7 +1090,53 @@ FixedwingPositionControl::control_position(const hrt_abstime &now, const Vector2
 					   tecs_status_s::TECS_MODE_NORMAL);
 
 		_att_sp.roll_body = _manual_control_setpoint.y * radians(_param_fw_man_r_max.get());
-		_att_sp.yaw_body = 0;
+
+		_att_sp.yaw_body = 0.f;
+
+	} else if (_control_mode.flag_control_altitude_enabled && !_control_mode.flag_control_manual_enabled) {
+		// if in Auto flight and position not valid, set fixed roll setpoint (GPS failure mode)
+		_control_mode_current = FW_POSCTRL_MODE_AUTO_ALTITUDE;
+
+		if (_control_mode_current != FW_POSCTRL_MODE_AUTO_ALTITUDE) {
+			/* Need to init because last loop iteration was in a different mode */
+			_hold_alt = _current_altitude;
+		}
+
+
+		tecs_update_pitch_throttle(now, _hold_alt,
+					   _param_fw_airspd_trim.get(),
+					   radians(_param_fw_p_lim_min.get()),
+					   radians(_param_fw_p_lim_max.get()),
+					   _param_fw_thr_min.get(),
+					   _param_fw_thr_max.get(),
+					   _param_fw_thr_cruise.get(),
+					   false,
+					   _param_fw_p_lim_min.get());
+
+
+		_att_sp.roll_body = math::radians(_param_fw_gpsf_r.get()); // open loop loiter bank angle
+		_att_sp.yaw_body = 0.f;
+
+	} else if (_control_mode.flag_control_climb_rate_enabled && !_control_mode.flag_control_altitude_enabled) {
+		/* DESCEND mode, without position and altitude control, just descend rate is controlled.
+		   Descend rate is st to FW_T_SINK_MIN. */
+
+		_control_mode_current = FW_POSCTRL_MODE_CLIMBRATE;
+
+		tecs_update_pitch_throttle(now, _hold_alt,
+					   _param_fw_airspd_trim.get(),
+					   radians(_param_fw_p_lim_min.get()),
+					   radians(_param_fw_p_lim_max.get()),
+					   _param_fw_thr_min.get(),
+					   throttle_max,
+					   _param_fw_thr_cruise.get(),
+					   false,
+					   _param_fw_p_lim_min.get(),
+					   tecs_status_s::TECS_MODE_NORMAL,
+					   -_param_fw_t_sink_min.get());
+
+		_att_sp.roll_body = math::radians(_param_fw_gpsf_r.get()); // open loop loiter bank angle
+		_att_sp.yaw_body = 0.f;
 
 	} else {
 		_control_mode_current = FW_POSCTRL_MODE_OTHER;
@@ -1767,7 +1815,8 @@ FixedwingPositionControl::Run()
 			if (_control_mode.flag_control_position_enabled ||
 			    _control_mode.flag_control_velocity_enabled ||
 			    _control_mode.flag_control_acceleration_enabled ||
-			    _control_mode.flag_control_altitude_enabled) {
+			    _control_mode.flag_control_altitude_enabled ||
+			    _control_mode.flag_control_climb_rate_enabled) {
 
 				const Quatf q(Eulerf(_att_sp.roll_body, _att_sp.pitch_body, _att_sp.yaw_body));
 				q.copyTo(_att_sp.q_d);
@@ -1902,7 +1951,8 @@ FixedwingPositionControl::tecs_update_pitch_throttle(const hrt_abstime &now, flo
 	bool in_air_alt_control = (!_landed &&
 				   (_control_mode.flag_control_auto_enabled ||
 				    _control_mode.flag_control_velocity_enabled ||
-				    _control_mode.flag_control_altitude_enabled));
+				    _control_mode.flag_control_altitude_enabled ||
+				    _control_mode.flag_control_climb_rate_enabled));
 
 	/* update TECS vehicle state estimates */
 	_tecs.update_vehicle_state_estimates(_airspeed, _body_acceleration(0), (_local_pos.timestamp > 0), in_air_alt_control,
