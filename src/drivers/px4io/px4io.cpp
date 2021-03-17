@@ -224,9 +224,9 @@ private:
 
 	safety_s _safety{};
 
-	bool			_lockdown_override{false};	///< allow to override the safety lockdown
+	bool			_lockdown_override{false};	///< override the safety lockdown
 
-	bool			_cb_flighttermination{true};	///< true if the flight termination circuit breaker is enabled
+	bool			_disable_flighttermination{true};	///< true if the flight termination circuit breaker is enabled
 
 	int32_t		_thermal_control{-1}; ///< thermal control state
 	bool			_analog_rc_rssi_stable{false}; ///< true when analog RSSI input is stable
@@ -377,7 +377,7 @@ PX4IO::PX4IO(device::Device *interface) :
 	_mixing_output.setAllMaxValues(PWM_DEFAULT_MAX);
 
 	/* Fetch initial flight termination circuit breaker state */
-	_cb_flighttermination = circuit_breaker_enabled("CBRK_FLIGHTTERM", CBRK_FLIGHTTERM_KEY);
+	_disable_flighttermination = circuit_breaker_enabled("CBRK_FLIGHTTERM", CBRK_FLIGHTTERM_KEY);
 }
 
 PX4IO::~PX4IO()
@@ -449,7 +449,6 @@ bool PX4IO::updateOutputs(bool stop_motors, uint16_t outputs[MAX_ACTUATORS],
 
 	/* output to the servos */
 	for (size_t i = 0; i < num_outputs; i++) {
-		// TODO: only update if changed
 		if (_prev_outputs[i] != outputs[i] || full_update) {
 			io_reg_set(PX4IO_PAGE_DIRECT_PWM, i, outputs[i]);
 			_prev_outputs[i] = outputs[i];
@@ -707,9 +706,9 @@ void PX4IO::Run()
 				io_reg_set(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_FORCE_SAFETY_OFF, circuit_breaker_io_safety_enabled);
 
 				/* Check if the flight termination circuit breaker has been updated */
-				_cb_flighttermination = circuit_breaker_enabled("CBRK_FLIGHTTERM", CBRK_FLIGHTTERM_KEY);
+				_disable_flighttermination = circuit_breaker_enabled("CBRK_FLIGHTTERM", CBRK_FLIGHTTERM_KEY);
 				/* Tell IO that it can terminate the flight if FMU is not responding or if a failure has been reported by the FailureDetector logic */
-				io_reg_set(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_ENABLE_FLIGHTTERMINATION, !_cb_flighttermination);
+				io_reg_set(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_ENABLE_FLIGHTTERMINATION, !_disable_flighttermination);
 
 				if (_param_sens_en_themal.get() != _thermal_control || _param_update_force) {
 
