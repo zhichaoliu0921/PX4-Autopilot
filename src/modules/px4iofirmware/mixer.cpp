@@ -148,6 +148,9 @@ mixer_tick()
 				     || (r_status_flags & PX4IO_P_STATUS_FLAGS_RAW_PWM)       /* or direct PWM is set */
 				    ));
 
+	/* we enable PWM output always on the IO side if FMU is up and running
+	 * as zero-outputs can be controlled by FMU by sending a 0 PWM command
+	 */
 	should_always_enable_pwm = ((r_status_flags & PX4IO_P_STATUS_FLAGS_INIT_OK)
 				    && (r_status_flags & PX4IO_P_STATUS_FLAGS_FMU_OK));
 
