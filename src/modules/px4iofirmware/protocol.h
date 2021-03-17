@@ -106,7 +106,7 @@
 #define PX4IO_P_STATUS_FLAGS_RC_DSM		(1 << 3) /* DSM input is valid */
 #define PX4IO_P_STATUS_FLAGS_RC_SBUS		(1 << 4) /* SBUS input is valid */
 #define PX4IO_P_STATUS_FLAGS_FMU_OK		(1 << 5) /* controls from FMU are valid */
-#define PX4IO_P_STATUS_FLAGS_RAW_PWM		(1 << 6) /* raw PWM from FMU is bypassing the mixer */
+#define PX4IO_P_STATUS_FLAGS_RAW_PWM		(1 << 6) /* raw PWM from FMU */
 #define PX4IO_P_STATUS_FLAGS_ARM_SYNC		(1 << 7) /* the arming state between IO and FMU is in sync */
 #define PX4IO_P_STATUS_FLAGS_INIT_OK		(1 << 8) /* initialisation of the IO completed without error */
 #define PX4IO_P_STATUS_FLAGS_FAILSAFE		(1 << 9) /* failsafe is active */
@@ -159,7 +159,7 @@
 #define PX4IO_P_SETUP_ARMING_IO_ARM_OK            (1 << 0) /* OK to arm the IO side */
 #define PX4IO_P_SETUP_ARMING_FMU_ARMED            (1 << 1) /* FMU is already armed */
 #define PX4IO_P_SETUP_ARMING_FMU_PREARMED         (1 << 2) /* FMU is already prearmed */
-#define PX4IO_P_SETUP_ARMING_FAILSAFE_CUSTOM      (1 << 3) /* use custom failsafe values, not 0 values of mixer */
+#define PX4IO_P_SETUP_ARMING_FAILSAFE_CUSTOM      (1 << 3) /* use custom failsafe values */
 #define PX4IO_P_SETUP_ARMING_LOCKDOWN             (1 << 4) /* If set, the system operates normally, but won't actuate any servos */
 #define PX4IO_P_SETUP_ARMING_FORCE_FAILSAFE       (1 << 5) /* If set, the system will always output the failsafe values */
 #define PX4IO_P_SETUP_ARMING_TERMINATION_FAILSAFE (1 << 6) /* If set, the system will never return from a failsafe, but remain in failsafe once triggered. */
@@ -207,7 +207,7 @@ enum {							/* DSM bind states */
 #define PX4IO_P_RC_CONFIG_OPTIONS_REVERSE	(1 << 1)
 #define PX4IO_P_RC_CONFIG_STRIDE		2		/**< spacing between channel config data */
 
-/* PWM output - overrides mixer */
+/* PWM output */
 #define PX4IO_PAGE_DIRECT_PWM			54		/**< 0..CONFIG_ACTUATOR_COUNT-1 */
 
 /* PWM failsafe values - zero disables the output */
