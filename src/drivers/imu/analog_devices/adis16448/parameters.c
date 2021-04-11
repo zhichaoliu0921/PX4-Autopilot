@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2019 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2021 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,11 +32,13 @@
  ****************************************************************************/
 
 /**
- * BlinkM LED
+ * Analog Devices ADIS16448 IMU (external SPI)
  *
  * @reboot_required true
- *
- * @boolean
- * @group Peripheral
- */
-PARAM_DEFINE_INT32(LIGHT_EN_BLINKM, 0);
+ * @min 0
+ * @max 1
+ * @group Sensors
+ * @value 0 Disabled
+ * @value 1 Enabled
+  */
+PARAM_DEFINE_INT32(SENS_EN_ADIS164X, 0);
