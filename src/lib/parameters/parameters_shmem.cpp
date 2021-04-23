@@ -104,7 +104,6 @@ static const param_info_s *param_info_base = (const param_info_s *) &px4_paramet
 struct param_wbuf_s {
 	union param_value_u	val;
 	param_t			param;
-	bool			unsaved;
 };
 
 
@@ -991,7 +990,7 @@ param_save_default()
 		goto do_exit;
 	}
 
-	res = param_export(fd, false, nullptr);
+	res = param_export(fd, nullptr);
 
 	if (res != OK) {
 		PX4_ERR("failed to write parameters to file: %s", filename);
@@ -1088,7 +1087,7 @@ param_load_default_no_notify()
 }
 
 int
-param_export(int fd, bool only_unsaved, param_filter_func filter)
+param_export(int fd, param_filter_func filter)
 {
 	perf_begin(param_export_perf);
 
@@ -1121,14 +1120,6 @@ param_export(int fd, bool only_unsaved, param_filter_func filter)
 	update_index_from_shmem();
 
 	while ((s = (struct param_wbuf_s *)utarray_next(param_values, s)) != nullptr) {
-		/*
-		 * If we are only saving values changed since last save, and this
-		 * one hasn't, then skip it
-		 */
-		if (only_unsaved && !s->unsaved) {
-			continue;
-		}
-
 		if (filter && !filter(s->param)) {
 			continue;
 		}
