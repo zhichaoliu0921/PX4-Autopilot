@@ -114,7 +114,7 @@ const int bits_per_allocation_unit  = (sizeof(*param_changed_storage) * 8);
 //#define ENABLE_SHMEM_DEBUG
 static void init_params();
 
-static int param_set_internal(param_t param, const void *val, bool mark_saved, bool notify_changes);
+static int param_set_internal(param_t param, const void *val, bool notify_changes);
 static unsigned char set_called_from_get = 0;
 
 static int param_import_done =
@@ -708,7 +708,7 @@ param_control_autosave(bool enable)
 }
 
 static int
-param_set_internal(param_t param, const void *val, bool mark_saved, bool notify_changes)
+param_set_internal(param_t param, const void *val, bool notify_changes)
 {
 	int result = -1;
 	bool params_changed = false;
@@ -1187,18 +1187,13 @@ out:
 	return result;
 }
 
-struct param_import_state {
-	bool mark_saved;
-};
-
 static int
-param_import_callback(bson_decoder_t decoder, void *priv, bson_node_t node)
+param_import_callback(bson_decoder_t decoder, bson_node_t node)
 {
 	float f = 0.0f;
 	int32_t i = 0;
 	void *v = nullptr;
 	int result = -1;
-	param_import_state *state = (param_import_state *)priv;
 
 	/*
 	 * EOO means the end of the parameter object. (Currently not supporting
@@ -1258,7 +1253,7 @@ param_import_callback(bson_decoder_t decoder, void *priv, bson_node_t node)
 		goto out;
 	}
 
-	if (param_set_internal(param, v, state->mark_saved, true)) {
+	if (param_set_internal(param, v, false, false)) {
 		PX4_DEBUG("error setting value for '%s'", node->name);
 		goto out;
 	}
@@ -1274,15 +1269,12 @@ static int
 param_import_internal(int fd, bool mark_saved)
 {
 	bson_decoder_s decoder;
-	param_import_state state;
 	int result = -1;
 
-	if (bson_decoder_init_file(&decoder, fd, param_import_callback, &state)) {
+	if (bson_decoder_init_file(&decoder, fd, param_import_callback)) {
 		PX4_ERR("decoder init failed");
 		return PX4_ERROR;
 	}
-
-	state.mark_saved = mark_saved;
 
 	do {
 		result = bson_decoder_next(&decoder);
@@ -1294,10 +1286,10 @@ param_import_internal(int fd, bool mark_saved)
 }
 
 int
-param_import(int fd, bool mark_saved)
+param_import(int fd)
 {
 #if !defined(FLASH_BASED_PARAMS)
-	return param_import_internal(fd, mark_saved);
+	return param_import_internal(fd);
 #else
 	(void)fd; // unused
 	// no need for locking here
