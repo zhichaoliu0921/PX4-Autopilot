@@ -1114,7 +1114,7 @@ FixedwingPositionControl::control_position(const hrt_abstime &now, const Vector2
 					   _param_fw_p_lim_min.get());
 
 
-		_att_sp.roll_body = math::radians(_param_fw_gpsf_r.get()); // open loop loiter bank angle
+		_att_sp.roll_body = math::radians(_param_nav_gpsf_r.get()); // open loop loiter bank angle
 		_att_sp.yaw_body = 0.f;
 
 	} else if (_control_mode.flag_control_climb_rate_enabled && !_control_mode.flag_control_altitude_enabled) {
@@ -1135,7 +1135,7 @@ FixedwingPositionControl::control_position(const hrt_abstime &now, const Vector2
 					   tecs_status_s::TECS_MODE_NORMAL,
 					   -_param_fw_t_sink_min.get());
 
-		_att_sp.roll_body = math::radians(_param_fw_gpsf_r.get()); // open loop loiter bank angle
+		_att_sp.roll_body = math::radians(_param_nav_gpsf_r.get()); // open loop loiter bank angle
 		_att_sp.yaw_body = 0.f;
 
 	} else {

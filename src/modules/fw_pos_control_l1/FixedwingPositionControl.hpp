@@ -419,7 +419,7 @@ private:
 
 		(ParamFloat<px4::params::FW_TKO_PITCH_MIN>) _takeoff_pitch_min,
 
-		(ParamFloat<px4::params::FW_GPSF_R>) _param_fw_gpsf_r
+		(ParamFloat<px4::params::NAV_GPSF_R>) _param_nav_gpsf_r
 
 	)
 
