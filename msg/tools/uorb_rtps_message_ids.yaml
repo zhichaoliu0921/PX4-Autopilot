@@ -349,6 +349,8 @@ rtps:
     id: 162
   - msg: camera_status
     id: 163
+  - msg: manual_control_input
+    id: 164
   ########## multi topics: begin ##########
   - msg: actuator_controls_0
     id: 180
