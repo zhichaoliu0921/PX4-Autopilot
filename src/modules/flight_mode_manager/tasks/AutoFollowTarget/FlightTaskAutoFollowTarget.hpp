@@ -129,12 +129,14 @@ protected:
 	follow_target_estimator_s _follow_target_estimator;
 	matrix::Vector2f _target_velocity_unit_vector;
 
-	// Lowpass filters for smoothing out the drone setpoints / follow angles
-	AlphaFilter<matrix::Vector3f>
-	_target_position_filtered;  // Smoothen target position because it's used for setpoint generation
-	AlphaFilter<matrix::Vector2f>
-	_offset_vector_filtered;  // Smoothen the offset vector to have more dynamic shots when target changes direction
-	AlphaFilter<float> _velocity_ff_scale;  // values 0-1, for avoiding big steps in velocity feedforward
+	// Lowpass filters for smoothingtarget position because it's used for setpoint generation
+	AlphaFilter<matrix::Vector3f> _target_position_filtered;
+
+	// Lowpass filter for smoothing the offset vector and have more dynamic shots when target changes direction
+	AlphaFilter<matrix::Vector2f> _offset_vector_filtered;
+
+	// Lowpass filter assuming  values 0-1, for avoiding big steps in velocity feedforward
+	AlphaFilter<float> _velocity_ff_scale;
 
 	DEFINE_PARAMETERS(
 		(ParamFloat<px4::params::NAV_MIN_FT_HT>) _param_nav_min_ft_ht,
