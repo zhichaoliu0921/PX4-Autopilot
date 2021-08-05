@@ -47,7 +47,7 @@
 #include <uORB/PublicationMulti.hpp>
 
 #include <drivers/drv_hrt.h>
-#include <lib/ecl/AlphaFilter/AlphaFilter.hpp>
+#include <lib/mathlib/math/filter/AlphaFilter.hpp>
 #include <lib/geo/geo.h>
 #include <mathlib/mathlib.h>
 #include <px4_platform_common/module.h>
