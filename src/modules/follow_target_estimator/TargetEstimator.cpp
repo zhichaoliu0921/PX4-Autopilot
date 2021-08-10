@@ -97,8 +97,8 @@ void TargetEstimator::update()
 	// Keep position estimate as the last known position
 	// but stop moving the estimate
 	if (is_stale(GPS_MESSAGE_STALE_TIMEOUT_MS)) {
-		_filter_states.v_ned_est = matrix::Vector3f{0.0f, 0.0f, 0.0f};
-		_filter_states.a_ned_est = matrix::Vector3f{0.0f, 0.0f, 0.0f};
+		_filter_states.v_ned_est.setAll(0.0f);
+		_filter_states.a_ned_est.setAll(0.0f);
 	}
 
 	const bool states_are_finite = _filter_states.is_finite();
@@ -185,7 +185,7 @@ void TargetEstimator::measurement_update(follow_target_s follow_target)
 	if (_last_follow_target_timestamp == 0) {
 		_filter_states.x_ned_est = x_measured;
 		_filter_states.v_ned_est = v_measured;
-		_filter_states.a_ned_est = {0.0f, 0.0f, 0.0f};
+		_filter_states.a_ned_est.setAll(0.0f);
 	}
 
 	_last_follow_target_timestamp = follow_target.timestamp;
@@ -218,7 +218,7 @@ void TargetEstimator::measurement_update(follow_target_s follow_target)
 
 	if (gps_vel_stale) {
 		// Reset XY-acceleration while GPS is stale to avoid filter runoffs
-		_filter_states.a_ned_est = matrix::Vector3f{0.0f, 0.0f, 0.0f};
+		_filter_states.a_ned_est.setAll(0.0f);
 	}
 
 	if (vel_fusion_old_enough && ((target_moving && !gps_vel_stale) || !target_moving)) {
@@ -282,10 +282,9 @@ void TargetEstimator::prediction_update(float deltatime)
 	}
 }
 
-
 matrix::Vector3<double> TargetEstimator::get_lat_lon_alt_est() const
 {
-	matrix::Vector3<double> lat_lon_alt{NAN, NAN, NAN};
+	matrix::Vector3<double> lat_lon_alt{(double)NAN, (double)NAN, (double)NAN};
 
 	if (PX4_ISFINITE(_filter_states.x_ned_est(0)) && PX4_ISFINITE(_filter_states.x_ned_est(0))) {
 		map_projection_reproject(&_reference_position, _filter_states.x_ned_est(0), _filter_states.x_ned_est(1),
@@ -303,15 +302,14 @@ bool TargetEstimator::is_stale(const float timeout_duration_ms) const
 	return measurements_stale;
 }
 
-
 void TargetEstimator::reset()
 {
 	_last_filter_reset_timestamp = hrt_absolute_time();  // debug only
 	_last_position_fusion_timestamp = _last_velocity_fusion_timestamp = 0;
 	_last_follow_target_timestamp = 0;
-	_filter_states.x_ned_est = {NAN, NAN, NAN};
-	_filter_states.v_ned_est = {NAN, NAN, NAN};
-	_filter_states.a_ned_est = {NAN, NAN, NAN};
-	_x_measurement_old = {NAN, NAN, NAN};
-	_v_measurement_old = {NAN, NAN, NAN};
+	_filter_states.x_ned_est.setAll(NAN);
+	_filter_states.v_ned_est.setAll(NAN);
+	_filter_states.a_ned_est.setAll(NAN);
+	_x_measurement_old.setAll(NAN);
+	_v_measurement_old.setAll(NAN);
 }

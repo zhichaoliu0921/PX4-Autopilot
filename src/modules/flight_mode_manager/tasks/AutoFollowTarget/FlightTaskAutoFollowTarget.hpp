@@ -51,28 +51,28 @@
 #include <uORB/topics/follow_target_estimator.h>
 #include <lib/mathlib/math/filter/AlphaFilter.hpp>
 
-#define MINIMUM_SPEED_FOR_HEADING_CHANGE 0.1f 	// Speed above which the target heading can change. Used to prevent unpredictable jitter at low speeds.
-#define MINIMUM_DISTANCE_TO_TARGET_FOR_YAW_CONTROL 1.0f  // Minimum distance between drone and target for the drone to do any yaw control.
-#define MINIMUM_SAFETY_ALTITUDE 1.0f  // Minimum safety altitude above home (or bottom distance sensor) underneath which the flight task will stop moving horizontally
-#define ALT_ACCEPTANCE_THRESHOLD 3.0f // [m] max vertical deviation from position setpoint, above which no horizontal control is done
-#define EMERGENCY_ASCENT_SPEED 0.2f
+static constexpr float MINIMUM_SPEED_FOR_HEADING_CHANGE = 0.1f; 		// Speed above which the target heading can change. Used to prevent unpredictable jitter at low speeds.
+static constexpr float MINIMUM_DISTANCE_TO_TARGET_FOR_YAW_CONTROL = 1.0f;  	// Minimum distance between drone and target for the drone to do any yaw control.
+static constexpr float MINIMUM_SAFETY_ALTITUDE = 1.0f;  			// Minimum safety altitude above home (or bottom distance sensor) underneath which the flight task will stop moving horizontally
+static constexpr float ALT_ACCEPTANCE_THRESHOLD = 3.0f; 			// [m] max vertical deviation from position setpoint, above which no horizontal control is done
+static constexpr float EMERGENCY_ASCENT_SPEED = 0.2f;
 
 // Filter gains for the different kinds of septoints
 // that should ensure a cinematic experience
-#define POSITION_FILTER_ALPHA 1.5f		// Lowpass applied to the estimated position of the target before using it as control input
-#define FOLLOW_ANGLE_FILTER_ALPHA 3.0f		// Lowpass applied to the follow-me angle setting, to ensure smooth and circular transitions between settings
-#define DIRECTION_FILTER_ALPHA 3.0f		// Lowpass applied to the actual NED direction how the drone is facing the target regarless of the setting. Used for dynamic tracking angles when the target makes a turn
-#define VELOCITY_FF_FILTER_ALPHA 1.0f		// Lowpass applied for ramping up / down velocity feedforward term
+static constexpr float POSITION_FILTER_ALPHA = 1.5f;		// Lowpass applied to the estimated position of the target before using it as control input
+static constexpr float FOLLOW_ANGLE_FILTER_ALPHA = 3.0f;	// Lowpass applied to the follow-me angle setting, to ensure smooth and circular transitions between settings
+static constexpr float DIRECTION_FILTER_ALPHA = 3.0f;		// Lowpass applied to the actual NED direction how the drone is facing the target regarless of the setting. Used for dynamic tracking angles when the target makes a turn
+static constexpr float VELOCITY_FF_FILTER_ALPHA = 1.0f;	// Lowpass applied for ramping up / down velocity feedforward term
 
 // Angles [deg] for the different follow-me perspectives
-#define FOLLOW_PERSPECTIVE_BEHIND_ANGLE_DEG 180.0
-#define FOLLOW_PERSPECTIVE_FRONT_ANGLE_DEG 0.0
-#define FOLLOW_PERSPECTIVE_FRONT_RIGHT_ANGLE_DEG 45.0
-#define FOLLOW_PERSPECTIVE_FRONT_LEFT_ANGLE_DEG 315.0
-#define FOLLOW_PERSPECTIVE_MID_RIGHT_ANGLE_DEG 90.0
-#define FOLLOW_PERSPECTIVE_MID_LEFT_ANGLE_DEG 270.0
-#define FOLLOW_PERSPECTIVE_BEHIND_RIGHT_ANGLE_DEG 135.0
-#define FOLLOW_PERSPECTIVE_BEHIND_LEFT_ANGLE_DEG 225.0
+static constexpr float FOLLOW_PERSPECTIVE_BEHIND_ANGLE_DEG = 180.0;
+static constexpr float FOLLOW_PERSPECTIVE_FRONT_ANGLE_DEG = 0.0;
+static constexpr float FOLLOW_PERSPECTIVE_FRONT_RIGHT_ANGLE_DEG = 45.0;
+static constexpr float FOLLOW_PERSPECTIVE_FRONT_LEFT_ANGLE_DEG = 315.0;
+static constexpr float FOLLOW_PERSPECTIVE_MID_RIGHT_ANGLE_DEG = 90.0;
+static constexpr float FOLLOW_PERSPECTIVE_MID_LEFT_ANGLE_DEG = 270.0;
+static constexpr float FOLLOW_PERSPECTIVE_BEHIND_RIGHT_ANGLE_DEG = 135.0;
+static constexpr float FOLLOW_PERSPECTIVE_BEHIND_LEFT_ANGLE_DEG = 225.0;
 
 
 class FlightTaskAutoFollowTarget : public FlightTask

@@ -53,20 +53,23 @@
 #include <px4_platform_common/module.h>
 #include <px4_platform_common/module_params.h>
 
-#define GPS_MESSAGE_STALE_TIMEOUT_MS 3000  	// Duration after which the connection to the target is considered lost
-#define MINIMUM_TIME_BETWEEN_POS_FUSIONS_MS 500
-#define MINIMUM_TIME_BETWEEN_VEL_FUSIONS_MS 100
-#define ACCELERATION_SATURATION 20.0f 		// 2*g
-#define MINIMUM_SPEED_FOR_TARGET_MOVING 0.1f 	// speed threshold above which the target is considered to be moving
+static constexpr float GPS_MESSAGE_STALE_TIMEOUT_MS = 3000.0f;  	// Duration after which the connection to the target is considered lost
+static constexpr float MINIMUM_TIME_BETWEEN_POS_FUSIONS_MS = 500.0f;
+static constexpr float MINIMUM_TIME_BETWEEN_VEL_FUSIONS_MS = 100.0f;
+static constexpr float ACCELERATION_SATURATION = 20.0f; 		// 2*g
+static constexpr float MINIMUM_SPEED_FOR_TARGET_MOVING = 0.1f; 	// speed threshold above which the target is considered to be moving
 
 using namespace time_literals;
 
 struct filter_gains_s {
 	// Position fusion gains
-	float G_p, H_p, K_p;
+	float G_p;
+	float H_p;
+	float K_p;
 
 	// Velocity fusion gains
-	float G_v, H_v;
+	float G_v;
+	float H_v;
 
 	// Estimator position / velocity update gains
 	float responsiveness;

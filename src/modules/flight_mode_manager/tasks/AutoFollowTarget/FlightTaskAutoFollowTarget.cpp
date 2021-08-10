@@ -61,7 +61,7 @@ bool FlightTaskAutoFollowTarget::activate(const vehicle_local_position_setpoint_
 
 	// Initialize to something such that the drone at least points at the target, even if it's the wrong angle for the perspective.
 	// The drone will move into position as soon as the target starts moving and its heading becomes known.
-	matrix::Vector2f current_drone_heading_2d{cos(_yaw), -sin(_yaw)};
+	matrix::Vector2f current_drone_heading_2d{cosf(_yaw), -sinf(_yaw)};
 
 	if (PX4_ISFINITE(current_drone_heading_2d(0)) && PX4_ISFINITE(current_drone_heading_2d(1))) {
 		_offset_vector_filtered.reset(current_drone_heading_2d);
@@ -154,7 +154,7 @@ bool FlightTaskAutoFollowTarget::update()
 				_target_velocity_unit_vector = matrix::Vector2f(v_ned_est.xy()).unit_or_zero();
 			}
 
-			const double follow_angle_rad = (double)_follow_angle_filtered.getState() * M_DEG_TO_RAD;
+			const float follow_angle_rad = math::radians(_follow_angle_filtered.getState());
 			float offset_x = (float)cos(follow_angle_rad) * _target_velocity_unit_vector(0) - (float)sin(
 						 follow_angle_rad) * _target_velocity_unit_vector(1);
 			float offset_y = (float)sin(follow_angle_rad) * _target_velocity_unit_vector(0) + (float)cos(
@@ -218,7 +218,7 @@ bool FlightTaskAutoFollowTarget::update()
 		} else {
 			// Control setpoint: Stay in current position
 			_position_setpoint = _position;
-			_velocity_setpoint = matrix::Vector3f{0, 0, 0};
+			_velocity_setpoint.setAll(0.0f);
 		}
 
 		_velocity_ff_scale.setParameters(_deltatime, VELOCITY_FF_FILTER_ALPHA);

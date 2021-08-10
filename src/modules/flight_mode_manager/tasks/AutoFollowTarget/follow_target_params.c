@@ -87,12 +87,8 @@ PARAM_DEFINE_INT32(NAV_FT_FS, 1);
 
 /**
  * Dynamic filtering algorithm responsiveness to target movement
-<<<<<<< HEAD:src/modules/navigator/follow_target_params.c
  *
- * lower numbers increase the responsiveness to changing long lat
-=======
  * lower values increase the responsiveness to changing long lat
->>>>>>> e95e66c534... New follow-me flight task:src/modules/flight_mode_manager/tasks/AutoFollowTarget/follow_target_params.c
  * but also ignore less noise
  *
  * @min 0.0
