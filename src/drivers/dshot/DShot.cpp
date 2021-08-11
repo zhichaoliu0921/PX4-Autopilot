@@ -345,6 +345,7 @@ void DShot::enable_dshot_outputs(const bool enabled)
 	if (_outputs_initialized) {
 		up_dshot_arm(enabled);
 		_outputs_on = enabled;
+		_dshot_triggers = 0;
 	}
 }
 
@@ -501,7 +502,7 @@ bool DShot::updateOutputs(bool stop_motors, uint16_t outputs[MAX_ACTUATORS],
 
 	int requested_telemetry_index = -1;
 
-	if (_telemetry) {
+	if (_telemetry && (_dshot_triggers > 100)) {
 		// check for an ESC info request. We only process it when we're not expecting other telemetry data
 		if (_request_esc_info.load() != nullptr && !_waiting_for_esc_info && stop_motors
 		    && !_telemetry->handler.expectingData() && !_current_command.valid()) {
@@ -516,7 +517,7 @@ bool DShot::updateOutputs(bool stop_motors, uint16_t outputs[MAX_ACTUATORS],
 
 		// when motors are stopped we check if we have other commands to send
 		for (int i = 0; i < (int)num_outputs; i++) {
-			if (_current_command.valid() && (_current_command.motor_mask & (1 << i))) {
+			if ((_dshot_triggers > 100) && _current_command.valid() && (_current_command.motor_mask & (1 << i))) {
 				// for some reason we need to always request telemetry when sending a command
 				up_dshot_motor_command(i, _current_command.command, true);
 
@@ -561,6 +562,7 @@ bool DShot::updateOutputs(bool stop_motors, uint16_t outputs[MAX_ACTUATORS],
 	}
 
 	if (stop_motors || num_control_groups_updated > 0) {
+		_dshot_triggers++;
 		up_dshot_trigger();
 	}
 

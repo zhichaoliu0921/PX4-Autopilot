@@ -218,6 +218,8 @@ private:
 	unsigned _num_outputs{0};
 	uint32_t _output_mask{0};
 
+	unsigned _dshot_triggers{0};
+
 	int _class_instance{-1};
 
 	perf_counter_t	_cycle_perf{perf_alloc(PC_ELAPSED, MODULE_NAME": cycle")};
