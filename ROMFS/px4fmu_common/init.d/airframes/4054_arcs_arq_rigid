@@ -35,10 +35,11 @@ param set-default MC_PITCHRATE_I 0.35
 param set-default MC_PITCHRATE_MAX 1200
 param set-default MC_PITCHRATE_P 0.082
 param set-default MC_PITCH_P 8
-param set-default MC_ROLLRATE_D 0.0012
+param set-default MC_ROLLRATE_D 0.0010
 param set-default MC_ROLLRATE_I 0.3
 param set-default MC_ROLLRATE_MAX 1200
 param set-default MC_ROLLRATE_P 0.076
+param set-default MC_ROLLRATE_K 0.95
 param set-default MC_ROLL_P 8
 param set-default MC_YAWRATE_I 0.3
 param set-default MC_YAWRATE_MAX 600
@@ -53,7 +54,7 @@ param set-default MPC_THR_MIN 0.05
 param set-default MPC_Z_VEL_I_ACC 1.7
 
 param set-default PWM_MAIN_MAX 1950
-param set-default PWM_MAIN_MIN 1050
+param set-default PWM_MAIN_MIN 1100
 
 param set-default PWM_MAIN_RATE 0
 param set-default THR_MDL_FAC 0.3
